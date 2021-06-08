@@ -1,0 +1,82 @@
+---
+title: "Reddit"
+author: "Krzysztof Bajdzienko"
+date: "3/1/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: cosmo
+    highlight: tango
+---
+
+R packages
+```{r setup, message=FALSE}
+library(httr)
+library(httpuv)
+library(usethis)
+library(glue)
+```
+
+
+# oAuth2 token
+
+Each API request must be accompanied by oAuth2 token as per [reddit documentation](https://github.com/reddit-archive/reddit/wiki/API).
+To get a token we need to login to reddit and create an "app" entry. 
+
+## Create app entry on reddit
+
+1. Login to reddit and create a token that will be used later:
+[Reddit Login](https://www.reddit.com/login/?dest=https%3A%2F%2Fwww.reddit.com%2Fprefs%2Fapps) and click on **are you a developer? create an app...**
+
+    There are three types of apps you can create:
+
+   * Web app - the app runs as the backend of a web server, on a server that only YOU have access to. Select this if your service is available over http or https (eg. shinyapps.io or rsconnect)
+
+   * Installed app - your app will be installed on someone elses computer
+   * **Script** - simplest type of app, You are the only person who will use your app
+
+2. Fill `name` of the app
+3. Choose **script** as app type
+4. `Description` and `about url` can be left blank
+5. Use **http://localhost:1221/** as `redirect uri`
+
+
+Make note of the client ID and client secret.
+
+> Note: You should NEVER post your client secret (or your reddit password) in public. If you create a bot, you should take steps to ensure that the bot's password and the app's client secret are secured against digital theft. 
+
+## Request oAuth token
+
+
+```{r req_oauth}
+appname <- "rapi"
+secret <- "iksalhNXDtZbmHEw6dSctz_8oqw7VQ"
+appid <-  "F2i2z2iR7JZJ7g"
+
+myapp <- oauth_endpoint(
+  authorize = "https://www.reddit.com/api/v1/authorize",
+  access = "https://www.reddit.com/api/v1/access_token"
+)
+
+app <- oauth_app(appname = appname, key = appid, secret = secret)
+
+token <- oauth2.0_token(myapp, app,
+  scope = c("read"),
+  use_basic_auth = TRUE,
+  config_init = user_agent("devtest")
+)
+
+x <- GET("https://www.reddit.com/api/v1/me")
+y <- content(x)
+y
+
+# POST(url = reddit_url,
+#      add_headers(
+#        data = glue("grant_type=password&username={userid}&password={pwd}")))
+
+```
+
+
+

@@ -1,0 +1,66 @@
+---
+title: "Intro to ggplot2"
+author: "Krzysztof Bajdzienko"
+date: "3/10/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, warning=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+## Summary functions in ggplot
+
+A statistical transformation, or stat, transforms the data, typically by summarising it in some manner. For example, a useful stat is the smoother, which calculates the smoothed mean of y, conditional on x. 
+
+### Errorbars
+
+In this exercise we will compose a column plot with errorbars representing standard error.
+We will use the `iris` dataset, and compare Petal Length with Sepal Length. To make this data usable for ggplot we have to convert it to long table format. In one column we will have all variables used on **x axis** and in another column variables for **y axis**
+
+Its important to list all the columns with values that will be used in **y axis** when building the `gather()` function call. Here we know that we will use Sepal and Petal Length. Species column is not inluded because it will not be used for in yaxis values.
+
+```{r}
+
+df <- iris %>%
+  as_tibble() %>%
+  select(Sepal.Length, 
+         Petal.Length,
+         Species) %>%
+  gather(Sepal.Length, 
+         Petal.Length,
+         key = xaxis, value = yaxis, )
+  
+df
+```
+
+Now for the column plot. You can see in the call that it was necessary to combine all labels for Sepal and Petal Length, since all summary functions are applied to the **yaxis** columns that has combined values.
+
+The last step is to calculate the values we want to plot.
+
+```{r}
+df_sum <- df %>%
+  group_by(xaxis) %>%
+  summarize(y = mean(yaxis, na.rm = TRUE),
+            ymin = y - (sd(yaxis)/sqrt(n()-1)),
+            ymax = y + (sd(yaxis)/sqrt(n()-1)),
+            count = n())
+
+df_sum
+
+myggplot <- ggplot(df_sum, aes(x = xaxis, y = y, ymin = ymin, ymax = ymax))+
+  geom_col() +
+  geom_errorbar()
+  
+myggplot
+```
+
